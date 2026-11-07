@@ -1,113 +1,184 @@
-# Transaction Leg Validation Pipeline
+# Transaction Data Engineering Pipeline
 
-Validates debit/credit legs of financial transactions (balance, currency, reference keys,
-event ordering), quarantines invalid records with a traceable reason, and publishes only
-valid transactions to curated tables. Python 3.10+ **standard library only** (csv, sqlite3,
-decimal, unittest) - no install step, no credentials.
+## Project Overview
 
-## Quick start (clean environment)
-```bash
-python -m unittest discover -s tests -t . -v                      # 27 tests
-python -m txn_pipeline generate --txns 150 --seed 42 --anomaly-rate 0.12   # data/sample/*
-python -m txn_pipeline run                                        # ingest -> output/curated.db
-python -m txn_pipeline run                                        # rerun: 0 inserts (idempotent)
-python -m txn_pipeline report                                     # reconciliation + report + CSV export
-python -m txn_pipeline generate --txns 40000 --out-dir data/large && \
-python -m txn_pipeline run --input data/large/transactions.csv --accounts data/large/accounts.csv
-python -m txn_pipeline benchmark --txns 40000                     # ~100k rows
-```
-Every path/threshold is a CLI flag or a field of `Config` (`txn_pipeline/config.py`).
+The Transaction Data Engineering Pipeline is a Python-based data processing application designed to ingest, validate, transform, and publish financial transaction data.
 
-## Architecture
-```
-transactions.csv ─► read_input ─► row validation ─► in-batch dedupe ─► conflict check vs curated
-accounts.csv     ─► read_accounts      │ fail                │ fail            │ fail
-                                       ▼                     ▼                 ▼
-                                 rejected_record  (one row per rejected source row, raw JSON kept)
-                                       ▲
-              txn-level checks (legs>=2, one currency, debits=credits, leg time skew)
-                                       │ pass
-                                       ▼
-        ONE sqlite transaction: dim_account upsert → fact_txn → fact_txn_leg → rejected_record
-                                       ▼
-                 pipeline_run (status, counts, timings, error)  →  report / CSV export
-```
-Modules: `validators.py` (pure rules) · `pipeline.py` (orchestration, load) · `generator.py` ·
-`reports.py` (reconciliation) · `__main__.py` (CLI).
+The main objective is to ensure that only clean and validated transaction data enters the curated database, while invalid records are isolated in a quarantine table for investigation.
 
-## Schemas
-**Input `transactions.csv`** (one row = one leg): `txn_id, leg_no, account_id, direction (DEBIT|CREDIT),
-amount (decimal string, major units), currency, event_ts, ingested_at (ISO-8601 with tz), txn_type`.
-Column order is irrelevant; extra columns are ignored with a warning; missing columns fail the run.
-**Input `accounts.csv`**: `account_id, account_currency, status (ACTIVE|CLOSED), opening_balance_minor`.
+The project also provides a web-based dashboard to monitor pipeline executions, analyze data quality, explore transaction records, and generate reports.
 
-| Table | Grain / key | Notes |
+## Key Features
+
+- **Data Ingestion:** Reads transaction and account information from CSV files.
+- **Data Validation:** Checks required fields, data types, account details, currencies, duplicate records, and transaction-level consistency.
+- **Data Transformation:** Processes and organizes validated transaction records.
+- **Duplicate Detection:** Identifies exact duplicates and conflicting transaction records.
+- **Data Quarantine:** Separates rejected records and stores their rejection reasons independently.
+- **Curated Data Storage:** Publishes only accepted transactions into curated database tables.
+- **Pipeline Monitoring:** Tracks execution history, accepted records, rejected records, and processing time.
+- **Data Quality Monitoring:** Provides validation metrics and rejection analysis.
+- **Report Generation:** Generates Markdown, JSON, and CSV reports.
+- **Interactive Dashboard:** Displays transaction volume, rejection analysis, pipeline history, and data quality information.
+
+## Project Architecture
+
+The pipeline follows four major stages:
+
+1. **Ingest:** Read transaction data from input CSV files.
+2. **Validate:** Perform row-level and transaction-level validation.
+3. **Transform:** Prepare validated records for database loading.
+4. **Publish:** Store accepted records in curated tables and rejected records separately in quarantine.
+
+## Technology Stack
+
+| Technology | Purpose |
+|---|---|
+| Python | Pipeline development and backend logic |
+| FastAPI | Backend API development |
+| SQLite | Database storage |
+| HTML | Dashboard structure |
+| CSS | Dashboard styling |
+| JavaScript | Frontend functionality |
+| Chart.js | Data visualization |
+| Pandas / CSV | Data handling and exports |
+| Pytest | Testing |
+
+## Database Design
+
+The project uses SQLite for persistent storage.
+
+**Curated tables:**
+
+- `fact_txn` – Accepted transaction records.
+- `fact_txn_leg` – Accepted transaction leg details.
+- `dim_account` – Account information.
+- `dim_account_history` – Historical account information.
+
+**Monitoring and quarantine tables:**
+
+- `rejected_record` – Rejected records and rejection reasons.
+- `pipeline_run` – Pipeline execution history.
+
+Rejected records are stored separately and are never published into the curated transaction tables.
+
+## Web Application Features
+
+The dashboard contains:
+
+1. Pipeline Overview
+2. Transaction Volume Analysis
+3. Rejection Analysis
+4. Curated Data Explorer
+5. Quarantined Data Explorer
+6. Data Quality Monitoring
+7. Pipeline Execution
+8. Pipeline Run History
+9. Reports and Data Exports
+
+## API Endpoints
+
+| Endpoint | Method | Purpose |
 |---|---|---|
-| `dim_account` | `account_id` PK | upsert; old versions kept in `dim_account_history` |
-| `fact_txn` | `txn_id` PK | derived: `leg_count`, `total_amount_minor`, first/last event ts, `is_late_arriving` |
-| `fact_txn_leg` | `leg_id` PK, UNIQUE(`txn_id`,`leg_no`) | `leg_id = sha1(txn_id\|leg_no)[:16]`; `amount_minor` integer >0; `signed_amount_minor` CREDIT+ / DEBIT-; `content_hash`; `source_file`, `source_row_no`, `run_id` |
-| `rejected_record` | `reject_id` PK = sha1(input_sha256\|row_no\|reason)[:16] | `reason_code`, `reason_detail`, `raw_record` (JSON), `source_file`, `source_row_no`, `run_id` |
-| `pipeline_run` | `run_id` PK | status RUNNING/SUCCESS/EMPTY_INPUT/FAILED, rows_read/accepted/inserted/already_loaded/rejected, txns_*, late/out-of-order counts, duration, warnings, error |
-| `vw_account_balance` | view | opening + net movement = closing balance |
+| `/api/health` | GET | Check application health |
+| `/api/dashboard/summary` | GET | Dashboard summary |
+| `/api/dashboard/transaction-volume` | GET | Transaction volume analysis |
+| `/api/dashboard/rejection-analysis` | GET | Rejection analysis |
+| `/api/dashboard/run-history` | GET | Pipeline execution history |
+| `/api/dashboard/run-details/{run_id}` | GET | View execution details |
+| `/api/curated-data` | GET | Retrieve accepted data |
+| `/api/curated-data/filters` | GET | Curated data filters |
+| `/api/quarantined-data` | GET | Retrieve rejected data |
+| `/api/quarantined-data/filters` | GET | Quarantine filters |
+| `/api/data-quality` | GET | Data quality metrics |
+| `/api/pipeline/run` | POST | Execute the pipeline |
+| `/api/reports/generate` | POST | Generate reports |
+| `/api/reports/download/{filename}` | GET | Download reports |
 
-Naming: snake_case tables/columns, `dim_`/`fact_`/`vw_` prefixes, timestamps ISO-8601 UTC (`...Z`),
-money stored as **integer minor units** (no floats; JPY exponent 0, others 2), deterministic IDs.
+## Project Structure
 
-## Validation rules (reason codes)
-Row level (first failing check wins, one reject row per source row): `MALFORMED_ROW`,
-`MISSING_REQUIRED_FIELD`, `INVALID_DIRECTION`, `INVALID_LEG_NO`, `UNSUPPORTED_CURRENCY`,
-`UNKNOWN_ACCOUNT` (referential integrity), `ACCOUNT_CLOSED`, `CURRENCY_MISMATCH` (leg vs account),
-`INVALID_AMOUNT` (non-numeric, <=0, NaN, too many decimals), `INVALID_TIMESTAMP`,
-`INGESTED_BEFORE_EVENT` (ordering).
-Duplicates: exact replay → first kept, rest `DUPLICATE_LEG`; same key, different content →
-all rows `DUPLICATE_CONFLICT`; already curated with different content → `CONFLICTS_WITH_CURATED`.
-Transaction level: `TXN_TOO_FEW_LEGS`, `TXN_MIXED_CURRENCY`, `TXN_IMBALANCE` (debits ≠ credits),
-`TXN_LEG_TS_SKEW` (legs > 60 s apart). If any leg of a txn fails, sibling legs are quarantined as
-`TXN_REJECTED_PEER_LEG` - **a transaction is published whole or not at all**.
-Warnings (loaded, not rejected): late arrival (`ingested_at - event_ts > 24h` → `is_late_arriving=1`);
-out-of-order rows (event_ts earlier than previous row) are counted; processing is order-independent.
+```text
+txn_pipeline_project/
+│
+├── data/
+│   └── sample/
+│
+├── output/
+│   ├── curated/
+│   ├── reports/
+│   ├── exports/
+│   └── curated.db
+│
+├── tests/
+│   └── test_pipeline.py
+│
+├── txn_pipeline/
+│   ├── __main__.py
+│   ├── config.py
+│   ├── db.py
+│   ├── generator.py
+│   ├── pipeline.py
+│   ├── reports.py
+│   └── validators.py
+│
+├── web_app/
+│   ├── main.py
+│   └── static/
+│       └── index.html
+│
+└── README.md
+```
 
-## Idempotency, retry, restart, backfill
-- Deterministic keys + `INSERT OR IGNORE`: rerunning the same file inserts 0 legs/rejects
-  (`rows_already_loaded` shows what was skipped); tested.
-- The whole publish is one DB transaction. Crash/exception → rollback, run marked `FAILED` with the error
-  (tested with an injected failure). **Retry = run the same command again.**
-- Schema break (missing required column / unreadable file) fails the run before any write.
-- Backfill: feed older files in any order; ordering does not matter for keys or validation.
-  Re-sent legs with *changed* content are quarantined, never silently overwritten.
+## Installation and Execution
 
-## Evidence & results (seed 42, 150 txns)
-`output/reports/validation_report.md` (12 reconciliation checks, all PASS), `output/curated/*.csv`,
-`output/test_evidence.txt`, `data/sample/expected_labels.csv` (kept **separate** from input; the test
-suite compares pipeline decisions with these labels for 3,000 txns × 13 anomaly types).
-Sample run: 389 rows read → 335 accepted (130 txns) + 54 quarantined (20 txns); rerun → 0 inserted.
-Reconciliation: `rows_read = accepted + rejected`, `accepted = inserted + already_loaded`,
-curated txns balanced, debits = credits, no orphan accounts, rejects traceable to run + source row.
+### 1. Clone the repository
 
-## Performance (`python -m txn_pipeline benchmark --txns 40000`, ~100k rows, laptop sandbox)
-| mode | total | validate | load | rows/s |
-|---|---|---|---|---|
-| per-row insert | 5.4 s | 3.1 s | 1.67 s | ~18.7k |
-| `executemany` | 4.5 s | 2.5 s | 1.67 s | ~22k |
-Finding: both variants load inside one transaction, so load time is the same; ~55% of time is
-per-row Python validation. Optimization applied: single transaction + `executemany` (vs commit-per-row,
-which is far slower on SQLite). Next optimization: validate in chunks with `multiprocessing`, or load
-the existing-key map only for keys present in the batch.
+```bash
+git clone <your-github-repository-url>
+cd txn_pipeline_project
+```
 
-## Assumptions
-CSV input; one currency per transaction (no FX); customer-style signs (CREDIT increases balance);
-`opening_balance_minor` is a given reference; all rows of a txn arrive in the same file.
+### 2. Install dependencies
 
-## Known limitations / next steps
-- A txn split across files (legs in different batches) would be rejected as too-few-legs; would need a
-  staging/watermark table to hold open transactions.
-- Overdraft / running-balance rules are not enforced (balances are reported, not gated).
-- SQLite is single-writer; swap to Postgres/Parquet+DuckDB for scale. Add Airflow/cron scheduling,
-  metrics export (Prometheus) and structured JSON logs.
+```bash
+pip install fastapi uvicorn pytest
+```
 
-## Design / trade-off note
-- **Whole-transaction atomicity** over leg-by-leg acceptance: a half-posted transfer is worse than a delayed one.
-- **One reject row per source row** keeps the identity `read = accepted + rejected` exact and auditable.
-- **Integer minor units + Decimal parsing** avoid float drift and make balance checks exact.
-- **Stdlib only** keeps setup to zero and the code readable; trade-off is single-process speed.
-- **Deterministic reject_id/leg_id** make idempotency a property of the keys, not of run bookkeeping.
+### 3. Run the web application
+
+From the project root directory:
+
+```bash
+python -m uvicorn web_app.main:app --reload
+```
+
+### 4. Open the application
+
+- Dashboard: http://localhost:8000
+- API Documentation: http://localhost:8000/docs
+
+### 5. Run tests
+
+```bash
+python -m pytest -q
+```
+
+## Validation and Testing Results
+
+- 27 automated tests passed.
+- Validation report: 12 out of 12 checks passed.
+- Database integrity check: 0 orphan transaction legs.
+- Report generation and CSV downloads successfully verified.
+- Dashboard and API functionality tested.
+
+## Project Objective
+
+The primary objective is to build a reliable transaction processing system that maintains data quality, prevents invalid records from entering curated transaction tables, and provides transparency through monitoring, quarantine management, and reporting.
+
+## Future Enhancements
+
+- Role-based authentication and access control.
+- Automated scheduled pipeline execution.
+- Advanced data quality monitoring.
+- Improved pipeline performance for large datasets.
+- Cloud database integration.
