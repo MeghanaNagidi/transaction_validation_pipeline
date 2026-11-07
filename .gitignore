@@ -1,0 +1,22 @@
+# Python cache
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Virtual environments
+venv/
+.venv/
+
+# Environment variables
+.env
+
+# Local database
+output/*.db
+output/*.db-*
+
+# Redundant exports
+output/exports/
+
+# System files
+.DS_Store
+Thumbs.db

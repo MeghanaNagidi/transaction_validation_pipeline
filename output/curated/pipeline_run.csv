@@ -1,0 +1,7 @@
+run_id,source_file,input_sha256,started_at,ended_at,status,rows_read,rows_accepted,rows_inserted,rows_already_loaded,rows_rejected,rejects_inserted,txns_accepted,txns_rejected,late_arriving_rows,out_of_order_rows,duration_seconds,warnings,error
+run_sample_001,transactions.csv,9650dfb984a34fc5f08a378cdd038ff1d06350de13796b9cb9457aa7a82b3379,2026-11-04T19:24:01Z,2026-11-04T19:24:01Z,SUCCESS,389,335,335,0,54,54,130,20,3,25,0.0197,[],
+run_sample_002_rerun,transactions.csv,9650dfb984a34fc5f08a378cdd038ff1d06350de13796b9cb9457aa7a82b3379,2026-11-04T19:24:01Z,2026-11-04T19:24:01Z,SUCCESS,389,335,0,335,54,0,130,20,3,25,0.0103,[],
+run_20261105T041642_e6c6ac,transactions.csv,9650dfb984a34fc5f08a378cdd038ff1d06350de13796b9cb9457aa7a82b3379,2026-11-05T04:16:42Z,2026-11-05T04:16:42Z,SUCCESS,389,335,0,335,54,0,130,20,3,25,0.0415,[],
+run_20261105T041754_de1e21,transactions.csv,9650dfb984a34fc5f08a378cdd038ff1d06350de13796b9cb9457aa7a82b3379,2026-11-05T04:17:54Z,2026-11-05T04:17:55Z,SUCCESS,389,335,0,335,54,0,130,20,3,25,0.0285,[],
+run_20261105T092514_4f7a0b,transactions.csv,7f1a8a7a97aeb1bd08229c532632d944b0468082617efed64805ed5bbf82b831,2026-11-05T09:25:14Z,2026-11-05T09:25:14Z,SUCCESS,518,464,129,335,54,54,180,20,3,55,0.0743,[],
+run_20261105T101300_edd5cd,transactions.csv,7f1a8a7a97aeb1bd08229c532632d944b0468082617efed64805ed5bbf82b831,2026-11-05T10:13:00Z,2026-11-05T10:13:00Z,SUCCESS,518,464,0,464,54,0,180,20,3,55,0.0331,[],

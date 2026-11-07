@@ -1,0 +1,1883 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Transaction Data Dashboard</title>
+
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+
+        body {
+            font-family: Arial, sans-serif;
+            background: #0b1120;
+            color: #e2e8f0;
+            min-height: 100vh;
+        }
+        /* Dashboard Sidebar */
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 230px;
+    height: 100vh;
+    background: #111827;
+    border-right: 1px solid #263247;
+    padding: 28px 16px;
+    z-index: 100;
+}
+
+.sidebar h2 {
+    font-size: 19px;
+    margin-bottom: 35px;
+    color: #38bdf8;
+}
+
+.sidebar a {
+    display: block;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    text-decoration: none;
+    border-radius: 7px;
+    font-size: 14px;
+}
+
+.sidebar a:hover {
+    background: #1e293b;
+    color: white;
+}
+
+header,
+main {
+    margin-left: 230px;
+    width: calc(100% - 230px);
+}
+
+main {
+    max-width: none;
+    padding: 32px;
+}
+
+@media (max-width: 700px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    .sidebar h2 {
+        margin-bottom: 15px;
+    }
+
+    .sidebar a {
+        display: inline-block;
+    }
+
+    header,
+    main {
+         margin-left: 0;
+         width: 100%;
+    }
+}
+
+        header {
+            padding: 24px 40px;
+            border-bottom: 1px solid #263247;
+            background: #111827;
+        }
+
+        header h1 {
+            font-size: 24px;
+            margin-bottom: 8px;
+        }
+
+        header p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        main {
+            max-width: 1200px;
+            margin: auto;
+            padding: 32px 24px;
+        }
+
+        .section-heading {
+            margin-bottom: 24px;
+        }
+
+        .section-heading h2 {
+            font-size: 20px;
+            margin-bottom: 8px;
+        }
+
+        .section-heading p {
+            color: #94a3b8;
+            font-size: 14px;
+        }
+
+        .cards {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+            gap: 20px;
+        }
+
+        .card {
+            background: #111c30;
+            border: 1px solid #263247;
+            border-radius: 12px;
+            padding: 24px;
+        }
+
+        .card h3 {
+            color: #94a3b8;
+            font-size: 14px;
+            font-weight: normal;
+            margin-bottom: 16px;
+        }
+
+        .card .value {
+            font-size: 30px;
+            font-weight: bold;
+            color: #f8fafc;
+        }
+
+        .card .description {
+            margin-top: 12px;
+            font-size: 12px;
+            color: #64748b;
+        }
+
+        .accepted {
+            border-top: 3px solid #10b981;
+        }
+
+        .rejected {
+            border-top: 3px solid #f87171;
+        }
+
+        .quality {
+            border-top: 3px solid #38bdf8;
+        }
+
+        .execution {
+            border-top: 3px solid #a78bfa;
+        }
+
+        .status {
+            margin-top: 28px;
+            color: #94a3b8;
+            font-size: 13px;
+        }
+
+        .error {
+            color: #f87171;
+        }
+
+        @media (max-width: 600px) {
+            header {
+                padding: 20px;
+            }
+
+            main {
+                padding: 24px 16px;
+            }
+        }
+        /* Fix sidebar and dashboard layout */
+* {
+    box-sizing: border-box;
+}
+
+.sidebar {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 230px;
+    height: 100vh;
+    padding: 28px 16px;
+    background: #111827;
+    border-right: 1px solid #263247;
+    z-index: 1000;
+    overflow-y: auto;
+}
+
+.sidebar h2 {
+    color: #38bdf8;
+    margin-bottom: 30px;
+}
+
+.sidebar a {
+    display: block;
+    padding: 13px 14px;
+    margin-bottom: 8px;
+    color: #cbd5e1;
+    text-decoration: none;
+    border-radius: 7px;
+}
+
+.sidebar a:hover {
+    background: #1e293b;
+    color: white;
+}
+
+header,
+main {
+    margin-left: 230px;
+    width: calc(100% - 230px);
+}
+
+main {
+    padding: 25px;
+}
+
+@media (max-width: 700px) {
+    .sidebar {
+        position: relative;
+        width: 100%;
+        height: auto;
+    }
+
+    header,
+    main {
+        margin-left: 0;
+        width: 100%;
+    }
+}
+    </style>
+</head>
+
+<body>
+    <nav class="sidebar">
+    <h2>Transaction Hub</h2>
+
+    <a href="#overview">Overview</a>
+    <a href="#transaction-volume">Transaction Volume</a>
+    <a href="#rejection-analysis">Rejection Analysis</a>
+    <a href="#curated-data">Curated Data</a>
+    <a href="#quarantined-data">Quarantined Data</a>
+    <a href="#data-quality">Data Quality</a>
+    <a href="#pipeline-execution">Pipeline Execution</a>
+    <a href="#pipeline-runs">Pipeline Runs</a>
+    <a href="#reports">Reports</a>
+</nav>
+    <header>
+        <h1>Transaction Data Engineering</h1>
+        <p>Pipeline monitoring and data quality dashboard</p>
+        <button onclick="refreshDashboard()" style="
+        background: #2563eb;
+        color: white;
+        padding: 10px 18px;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+        margin-top: 15px;
+    ">
+        ↻ Refresh Dashboard
+    </button>
+    </header>
+
+    <main>
+        <div class="section-heading" id="overview">
+            <h2>Pipeline Overview</h2>
+            <p>Summary of your transaction processing activity</p>
+        </div>
+
+        <section class="cards">
+
+            <div class="card">
+                <h3>Transactions Processed</h3>
+                <div class="value" id="total">Loading...</div>
+                <p class="description">Total processed rows</p>
+            </div>
+
+            <div class="card accepted">
+                <h3>Accepted Transactions</h3>
+                <div class="value" id="accepted">Loading...</div>
+                <p class="description">Records accepted by validation</p>
+            </div>
+
+            <div class="card rejected">
+                <h3>Rejected Transactions</h3>
+                <div class="value" id="rejected">Loading...</div>
+                <p class="description">Records rejected by validation</p>
+            </div>
+
+            <div class="card quality">
+                <h3>Data Quality Success Rate</h3>
+                <div class="value" id="quality">Loading...</div>
+                <p class="description">Accepted records / processed records</p>
+            </div>
+
+            <div class="card execution">
+                <h3>Total Execution Time</h3>
+                <div class="value" id="execution">Loading...</div>
+                <p class="description">Combined time across successful runs</p>
+            </div>
+
+        </section>
+
+               <!-- Transaction Volume Chart -->
+<section id="transaction-volume" class="card" style="margin-top: 28px; margin-bottom: 28px;">
+    <h2 style="margin-bottom: 20px;">
+        Transaction Volume Analysis
+    </h2>
+    <canvas id="transactionChart"></canvas>
+</section>
+
+<!-- Rejection Analysis -->
+<section id="rejection-analysis" class="card" style="margin-top: 28px; margin-bottom: 28px;">
+    <h2 style="margin-bottom: 20px;">
+        Rejection Analysis
+    </h2>
+    <div style="width: 700px; height: 500px; margin: 0 auto;">
+    <canvas id="rejectionChart"></canvas>
+</div>
+</section>
+<!-- Curated Data Explorer -->
+<section class="card" id="curated-data" style="margin-top: 28px;">
+
+    <h2 style="margin-bottom: 10px;">Curated Data Explorer</h2>
+    <p style="color: #94a3b8; margin-bottom: 20px;">
+        Search and explore validated transaction records
+    </p>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+
+        <input
+            type="text"
+            id="curatedSearch"
+            placeholder="Search Transaction ID..."
+            style="padding: 10px; background: #111c30; color: white; border: 1px solid #263247; border-radius: 6px;"
+        >
+
+        <select id="curatedCurrency" style="padding: 10px; background: #111c30; color: white; border: 1px solid #263247; border-radius: 6px;">
+            <option value="">All Currencies</option>
+        </select>
+
+        <select id="curatedType" style="padding: 10px; background: #111c30; color: white; border: 1px solid #263247; border-radius: 6px;">
+            <option value="">All Transaction Types</option>
+        </select>
+
+        <button onclick="searchCuratedData()" style="padding: 10px 16px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            Search
+        </button>
+
+        <button onclick="clearCuratedFilters()" style="padding: 10px 16px; background: #334155; color: white; border: none; border-radius: 6px; cursor: pointer;">
+            Clear
+        </button>
+
+    </div>
+
+    <p id="curatedCount" style="color: #94a3b8; margin-bottom: 12px;">
+        Loading records...
+    </p>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="color: #94a3b8; border-bottom: 1px solid #263247;">
+                    <th style="padding: 12px;">Transaction ID</th>
+                    <th style="padding: 12px;">Type</th>
+                    <th style="padding: 12px;">Currency</th>
+                    <th style="padding: 12px;">Amount (Minor Units)</th>
+                    <th style="padding: 12px;">Leg Count</th>
+                    <th style="padding: 12px;">Event Time</th>
+                    <th style="padding: 12px;">Late Arrival</th>
+                </tr>
+            </thead>
+            <tbody id="curatedTable">
+                <tr>
+                    <td colspan="7" style="padding: 15px;">Loading records...</td>
+                </tr>
+            </tbody>
+        </table>
+    </div>
+
+    <div style="display: flex; justify-content: flex-end; align-items: center; gap: 12px; margin-top: 20px;">
+        <button onclick="changeCuratedPage(-1)" style="padding: 8px 14px; background: #334155; color: white; border: none; border-radius: 6px; cursor: pointer;">Previous</button>
+
+        <span id="curatedPageInfo">Page 1</span>
+
+        <button onclick="changeCuratedPage(1)" style="padding: 8px 14px; background: #2563eb; color: white; border: none; border-radius: 6px; cursor: pointer;">Next</button>
+    </div>
+
+</section>
+<!-- Quarantined Data Explorer -->
+<section class="card" id="quarantined-data" style="margin-top: 28px;">
+
+    <h2 style="margin-bottom: 20px;">Quarantined Data Explorer</h2>
+
+    <div style="display: flex; gap: 12px; flex-wrap: wrap; margin-bottom: 20px;">
+
+        <input
+            type="text"
+            id="quarantineSearch"
+            placeholder="Search Transaction ID or Source File..."
+            style="padding: 10px; border-radius: 6px; border: 1px solid #263247; background: #111827; color: white; flex: 1; min-width: 220px;"
+        >
+
+        <select
+            id="quarantineReason"
+            style="padding: 10px; border-radius: 6px; background: #111827; color: white; border: 1px solid #263247;"
+        >
+            <option value="">All Rejection Reasons</option>
+        </select>
+
+        <button onclick="searchQuarantinedData()">Search</button>
+        <button onclick="clearQuarantineFilters()">Clear</button>
+
+    </div>
+
+    <p id="quarantineCount" style="margin-bottom: 15px;">
+        Loading rejected records...
+    </p>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+
+            <thead>
+                <tr style="background: #1e293b;">
+                    <th style="padding: 12px;">Transaction ID</th>
+                    <th style="padding: 12px;">Source File</th>
+                    <th style="padding: 12px;">Row Number</th>
+                    <th style="padding: 12px;">Leg Number</th>
+                    <th style="padding: 12px;">Rejection Reason</th>
+                    <th style="padding: 12px;">Details</th>
+                    <th style="padding: 12px;">Rejected At</th>
+                </tr>
+            </thead>
+
+            <tbody id="quarantineTable">
+                <tr>
+                    <td colspan="7" style="padding: 15px;">
+                        Loading records...
+                    </td>
+                </tr>
+            </tbody>
+
+        </table>
+    </div>
+
+    <div style="display: flex; gap: 15px; align-items: center; margin-top: 20px;">
+
+        <button onclick="changeQuarantinePage(-1)">Previous</button>
+
+        <span id="quarantinePageInfo">Page 1</span>
+
+        <button onclick="changeQuarantinePage(1)">Next</button>
+
+    </div>
+
+</section>
+<!-- Data Quality Monitoring -->
+<section class="card" id="data-quality" style="margin-top: 28px;">
+
+    <h2 style="margin-bottom: 20px;">Data Quality Monitoring</h2>
+
+    <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(180px, 1fr)); gap: 18px;">
+
+        <div style="background: #111827; padding: 20px; border-radius: 10px;">
+            <p style="color: #94a3b8;">Total Records Processed</p>
+            <h2 id="qualityTotalRecords" style="margin-top: 10px;">-</h2>
+        </div>
+
+        <div style="background: #111827; padding: 20px; border-radius: 10px;">
+            <p style="color: #94a3b8;">Rejected Records</p>
+            <h2 id="qualityRejected" style="margin-top: 10px; color: #f87171;">-</h2>
+        </div>
+
+        <div style="background: #111827; padding: 20px; border-radius: 10px;">
+            <p style="color: #94a3b8;">Rejection Rate</p>
+            <h2 id="qualityRejectionRate" style="margin-top: 10px;">-</h2>
+        </div>
+
+        <div style="background: #111827; padding: 20px; border-radius: 10px;">
+            <p style="color: #94a3b8;">Data Quality Success Rate</p>
+            <h2 id="qualitySuccessRate" style="margin-top: 10px; color: #10b981;">-</h2>
+        </div>
+
+    </div>
+
+    <div style="margin-top: 25px; background: #111827; padding: 20px; border-radius: 10px;">
+
+        <h3 style="margin-bottom: 15px;">Overall Data Quality</h3>
+
+        <div style="height: 14px; background: #334155; border-radius: 20px; overflow: hidden;">
+
+            <div
+                id="qualityProgress"
+                style="height: 100%; width: 0%; background: #10b981; border-radius: 20px; transition: width 0.5s;"
+            ></div>
+
+        </div>
+
+        <p id="qualityStatus" style="margin-top: 12px; color: #94a3b8;">
+            Loading quality status...
+        </p>
+
+    </div>
+
+</section>
+
+<section id="pipeline-execution" class="section" style="margin-top: 40px; padding-top: 20px; clear: both;">
+    <h2>Pipeline Execution</h2>
+    <p style="color:#9ca3af; margin:10px 0 20px;">
+        Upload your transaction data and account master CSV files to execute the pipeline.
+    </p>
+
+    <div style="background:#1e293b; padding:24px; border-radius:12px; max-width:700px;">
+
+        <div style="margin-bottom:20px;">
+            <label style="display:block; margin-bottom:10px;">
+                Transaction CSV File
+            </label>
+            <input type="file" id="transactionFile" accept=".csv"
+                   style="width:100%; padding:12px; background:#0f172a; color:white; border-radius:6px;">
+        </div>
+
+        <div style="margin-bottom:20px;">
+            <label style="display:block; margin-bottom:10px;">
+                Accounts CSV File
+            </label>
+            <input type="file" id="accountsFile" accept=".csv"
+                   style="width:100%; padding:12px; background:#0f172a; color:white; border-radius:6px;">
+        </div>
+
+        <button onclick="runPipeline()"
+                style="background:#2563eb; color:white; padding:12px 24px;
+                       border:none; border-radius:6px; cursor:pointer;">
+            Run Pipeline
+        </button>
+
+        <div id="pipelineExecutionResult"
+             style="margin-top:20px; color:#e5e7eb; white-space:pre-wrap;">
+        </div>
+    </div>
+</section>
+
+<!-- Pipeline Run History -->
+ <section class="card" id="pipeline-runs" style="margin-top: 28px;">
+    <div style="
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    gap: 15px;
+    flex-wrap: wrap;
+">
+    <h2>Pipeline Run History</h2>
+
+    <input
+        type="text"
+        id="runSearch"
+        placeholder="Search by Run ID..."
+        oninput="searchRuns()"
+        style="
+            padding: 10px;
+            width: 250px;
+            background: #111c30;
+            color: white;
+            border: 1px solid #263247;
+            border-radius: 6px;
+        "
+    >
+    <select
+    id="statusFilter"
+    onchange="searchRuns()"
+    style="
+        padding: 10px;
+        background: #111c30;
+        color: white;
+        border: 1px solid #263247;
+        border-radius: 6px;
+    "
+>
+    <option value="">All Statuses</option>
+    <option value="SUCCESS">Success</option>
+    <option value="FAILED">Failed</option>
+    <option value="EMPTY_INPUT">Empty Input</option>
+</select>
+<button onclick="clearRunFilters()" style="
+    padding: 10px 16px;
+    background: #334155;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+">
+    Clear Filters
+</button>
+<select id="runSort" onchange="sortRunHistory()" style="
+    padding: 10px;
+    background: #111c30;
+    color: white;
+    border: 1px solid #263247;
+    border-radius: 6px;
+">
+    <option value="newest">Newest First</option>
+    <option value="oldest">Oldest First</option>
+    <option value="duration_high">Longest Duration</option>
+    <option value="duration_low">Shortest Duration</option>
+</select>
+<button onclick="exportRunHistory()" style="
+    padding: 10px 16px;
+    background: #059669;
+    color: white;
+    border: none;
+    border-radius: 6px;
+    cursor: pointer;
+">
+    ⬇ Export CSV
+</button>
+</div>
+
+    <div style="overflow-x: auto;">
+        <table style="width: 100%; border-collapse: collapse; text-align: left;">
+            <thead>
+                <tr style="color: #94a3b8; border-bottom: 1px solid #263247;">
+                    <th style="padding: 12px;">Run ID</th>
+                    <th style="padding: 12px;">Started At</th>
+                    <th style="padding: 12px;">Status</th>
+                    <th style="padding: 12px;">Rows Read</th>
+                    <th style="padding: 12px;">Accepted</th>
+                    <th style="padding: 12px;">Rejected</th>
+                    <th style="padding: 12px;">Duration</th>
+                </tr>
+            </thead>
+
+            <tbody id="runHistory">
+                <tr>
+                    <td colspan="7" style="padding: 15px;">
+                        Loading pipeline history...
+                    </td>
+                </tr>
+            </tbody>
+        </table>
+        <div id="pagination" style="
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+    gap: 12px;
+    margin-top: 20px;
+">
+    <button onclick="changeRunPage(-1)" style="
+        padding: 8px 14px;
+        background: #334155;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    ">Previous</button>
+
+    <span id="pageInfo" style="color: #cbd5e1;">
+        Page 1
+    </span>
+
+    <button onclick="changeRunPage(1)" style="
+        padding: 8px 14px;
+        background: #2563eb;
+        color: white;
+        border: none;
+        border-radius: 6px;
+        cursor: pointer;
+    ">Next</button>
+</div>
+    </div>
+</section>
+
+<!-- Reports Section -->
+<section class="card" id="reports" style="margin-top: 28px;">
+
+    <h2 style="margin-bottom: 10px;">Reports & Data Exports</h2>
+
+    <p style="color: #94a3b8; margin-bottom: 22px;">
+        Generate reconciliation reports, execution summaries
+        and downloadable database exports.
+    </p>
+
+    <div style="
+        background: #111827;
+        padding: 22px;
+        border-radius: 10px;
+        margin-bottom: 22px;
+    ">
+        <h3 style="margin-bottom: 10px;">Generate Reports</h3>
+
+        <p style="color: #94a3b8; font-size: 13px; margin-bottom: 18px;">
+            Generate reports using the latest data stored in SQLite.
+        </p>
+
+        <button onclick="generateReports()" style="
+            background: #2563eb;
+            color: white;
+            padding: 12px 22px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        ">
+            Generate All Reports
+        </button>
+
+        <p id="reportStatus" style="
+            margin-top: 16px;
+            color: #94a3b8;
+        ">
+            Reports have not been generated yet.
+        </p>
+    </div>
+
+    <h3 style="margin-bottom: 15px;">Available Reports</h3>
+
+    <div style="
+        display: grid;
+        grid-template-columns: repeat(auto-fit, minmax(230px, 1fr));
+        gap: 15px;
+    ">
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Validation Report</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Reconciliation checks and data quality results.
+            </p>
+            <a href="/api/reports/download/validation_report.md" download
+               style="color:#38bdf8;">Download Markdown</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Validation JSON</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Structured validation results.
+            </p>
+            <a href="/api/reports/download/validation_report.json" download
+               style="color:#38bdf8;">Download JSON</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Execution Report</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Latest pipeline execution summary.
+            </p>
+            <a href="/api/reports/download/execution_report.md" download
+               style="color:#38bdf8;">Download Report</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Curated Transactions</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Validated transaction records.
+            </p>
+            <a href="/api/reports/download/fact_txn.csv" download
+               style="color:#38bdf8;">Download CSV</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Transaction Legs</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Debit and credit transaction details.
+            </p>
+            <a href="/api/reports/download/fact_txn_leg.csv" download
+               style="color:#38bdf8;">Download CSV</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Rejected Records</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Quarantined transaction records.
+            </p>
+            <a href="/api/reports/download/rejected_record.csv" download
+               style="color:#38bdf8;">Download CSV</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Account Balances</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Current account balance information.
+            </p>
+            <a href="/api/reports/download/account_balance.csv" download
+               style="color:#38bdf8;">Download CSV</a>
+        </div>
+
+        <div style="background:#111827; padding:18px; border-radius:10px;">
+            <h4>Pipeline Run History</h4>
+            <p style="color:#94a3b8; font-size:13px; margin:10px 0;">
+                Historical pipeline execution records.
+            </p>
+            <a href="/api/reports/download/pipeline_run.csv" download
+               style="color:#38bdf8;">Download CSV</a>
+        </div>
+
+    </div>
+
+</section>
+
+<p class="status" id="status">
+    Connecting to the database...
+</p>
+    </main>
+    <!-- Pipeline Run Details Modal -->
+<div id="runModal" onclick="closeRunModal()" style="
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.75);
+    justify-content: center;
+    align-items: center;
+    z-index: 1000;
+">
+    <div onclick="event.stopPropagation()" style="  
+        background: #111c30;
+        border: 1px solid #263247;
+        border-radius: 12px;
+        padding: 28px;
+        width: 90%;
+        max-width: 500px;
+        color: #e2e8f0;
+    ">
+        <h2 style="margin-bottom: 20px;">
+            Pipeline Run Details
+        </h2>
+
+        <div id="runDetailsContent">
+            Loading details...
+        </div>
+
+        <button onclick="closeRunModal()" style="
+            margin-top: 24px;
+            background: #2563eb;
+            color: white;
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            cursor: pointer;
+        ">
+            Close
+        </button>
+    </div>
+</div>
+
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+
+    <script>
+        async function loadDashboard() {
+            const status = document.getElementById("status");
+
+            try {
+                const response = await fetch("/api/dashboard/summary");
+
+                if (!response.ok) {
+                    throw new Error("Could not load dashboard data");
+                }
+
+                const data = await response.json();
+
+                document.getElementById("total").textContent =
+                    data.total_transactions_processed.toLocaleString();
+
+                document.getElementById("accepted").textContent =
+                    data.accepted_transactions.toLocaleString();
+
+                document.getElementById("rejected").textContent =
+                    data.rejected_transactions.toLocaleString();
+
+                document.getElementById("quality").textContent =
+                    data.data_quality_success_rate + "%";
+
+                document.getElementById("execution").textContent =
+                    data.total_execution_time_seconds + " sec";
+
+                status.textContent = "Dashboard connected to SQLite successfully.";
+
+            } catch (error) {
+                status.textContent = "Error: " + error.message;
+                status.classList.add("error");
+            }
+        }
+
+        
+        async function loadTransactionChart() {
+            try {
+                const response = await fetch(
+                    "/api/dashboard/transaction-volume"
+                );
+
+                if (!response.ok) {
+                    throw new Error("Unable to load transaction data");
+                }
+
+                const data = await response.json();
+
+                const labels = data.map(run =>
+    run.run_id
+        ? run.run_id.substring(0, 18) + "..."
+        : "Unknown Run"
+);
+
+                const accepted = data.map(run => run.accepted);
+                const rejected = data.map(run => run.rejected);
+
+                const ctx = document.getElementById(
+                    "transactionChart"
+                ).getContext("2d");
+
+                window.transactionChartInstance = new Chart(ctx, {
+                    type: "bar",
+
+                    data: {
+                        labels: labels,
+
+                        datasets: [
+                            {
+                                label: "Accepted",
+                                data: accepted,
+                                backgroundColor: "#10b981"
+                            },
+                            {
+                                label: "Rejected",
+                                data: rejected,
+                                backgroundColor: "#f87171"
+                            }
+                        ]
+                    },
+
+                    options: {
+                        responsive: true,
+
+                        scales: {
+                            x: {
+                                ticks: { color: "#94a3b8" },
+                                grid: { color: "#263247" }
+                            },
+
+                            y: {
+                                beginAtZero: true,
+                                ticks: { color: "#94a3b8" },
+                                grid: { color: "#263247" }
+                            }
+                        },
+
+                        plugins: {
+    legend: {
+        labels: { color: "#e2e8f0" }
+    },
+
+    tooltip: {
+        callbacks: {
+            footer: function(items) {
+                const index = items[0].dataIndex;
+                const total = accepted[index] + rejected[index];
+
+                return "Total Transactions: " + total;
+            }
+        }
+    }
+}
+                    }
+                });
+
+            } catch (error) {
+                console.error("Chart error:", error);
+            }
+        }
+        async function loadRejectionChart() {
+    try {
+        const response = await fetch(
+            "/api/dashboard/rejection-analysis"
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to load rejection data");
+        }
+
+        const data = await response.json();
+
+        const labels = data.map(item => item.reason);
+        const counts = data.map(item => item.count);
+
+        const ctx = document.getElementById(
+            "rejectionChart"
+        ).getContext("2d");
+
+        window.rejectionChartInstance = new Chart(ctx, {
+            type: "doughnut",
+
+            data: {
+                labels: labels,
+
+                datasets: [{
+                    label: "Rejected Records",
+                    data: counts,
+                    backgroundColor: [
+                        "#f87171",
+                        "#fb923c",
+                        "#facc15",
+                        "#a78bfa",
+                        "#38bdf8",
+                        "#10b981"
+                    ],
+                    borderWidth: 1,
+                    borderColor: "#111c30"
+                }]
+            },
+
+            options: {
+                responsive: true,
+
+                plugins: {
+                    legend: {
+                        position: "bottom",
+                        labels: {
+                            color: "#e2e8f0"
+                        }
+                    }
+                }
+            }
+        });
+
+    } catch (error) {
+        console.error("Rejection chart error:", error);
+    }
+}
+async function loadRunHistory() {
+    try {
+        const response = await fetch("/api/dashboard/run-history");
+
+        if (!response.ok) {
+            throw new Error("Unable to load pipeline history");
+        }
+
+        const data = await response.json();
+
+        const tableBody = document.getElementById("runHistory");
+
+        tableBody.innerHTML = "";
+
+        if (data.length === 0) {
+            tableBody.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding: 15px;">
+                        No pipeline runs found.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.forEach(run => {
+            const row = document.createElement("tr");
+
+            row.style.borderBottom = "1px solid #263247";
+
+            row.innerHTML = `
+                <td style="padding: 12px;">
+    <a href="#" onclick="showRunDetails('${run.run_id}'); return false;"
+       style="color: #38bdf8; text-decoration: none;">
+        ${run.run_id}
+    </a>
+</td>
+                <td style="padding: 12px;">${run.started_at ?? "-"}</td>
+                <td style="padding: 12px;">${run.status}</td>
+                <td style="padding: 12px;">${run.rows_read ?? 0}</td>
+                <td style="padding: 12px;">${run.accepted ?? 0}</td>
+                <td style="padding: 12px;">${run.rejected ?? 0}</td>
+                <td style="padding: 12px;">${run.duration ?? 0} sec</td>
+            `;
+
+            tableBody.appendChild(row);
+        });
+
+    } catch (error) {
+        console.error("Run history error:", error);
+    }
+searchRuns();
+}
+function refreshDashboard() {
+    loadDashboard();
+    loadDataQuality();
+    loadCuratedData();
+    loadQuarantinedData();  
+
+    if (window.transactionChartInstance) {
+        window.transactionChartInstance.destroy();
+    }
+
+    if (window.rejectionChartInstance) {
+        window.rejectionChartInstance.destroy();
+    }
+
+    loadTransactionChart();
+    loadRejectionChart();
+    loadRunHistory();
+}
+let currentRunPage = 1;
+const runsPerPage = 5;
+
+function searchRuns() {
+    currentRunPage = 1;
+    applyRunPagination();
+}
+function clearRunFilters() {
+
+    // Clear search box
+    document.getElementById("runSearch").value = "";
+
+    // Reset status filter
+    document.getElementById("statusFilter").value = "";
+
+    // Reset sorting
+    document.getElementById("runSort").value = "newest";
+
+    // Return to first page
+    currentRunPage = 1;
+
+    // Reload complete pipeline run history
+    loadRunHistory();
+}
+
+function applyRunPagination() {
+    const searchValue = document
+        .getElementById("runSearch")
+        .value.toLowerCase();
+
+    const statusValue = document
+        .getElementById("statusFilter")
+        .value;
+
+    const rows = Array.from(
+        document.querySelectorAll("#runHistory tr")
+    ).filter(row => row.cells.length === 7);
+
+    const filteredRows = rows.filter(row => {
+        const runId = row.cells[0].textContent.toLowerCase();
+        const status = row.cells[2].textContent.trim();
+
+        return runId.includes(searchValue) &&
+            (statusValue === "" || status === statusValue);
+    });
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredRows.length / runsPerPage)
+    );
+
+    currentRunPage = Math.min(currentRunPage, totalPages);
+
+    rows.forEach(row => {
+        row.style.display = "none";
+    });
+
+    const start = (currentRunPage - 1) * runsPerPage;
+    const end = start + runsPerPage;
+
+    filteredRows.slice(start, end).forEach(row => {
+        row.style.display = "";
+    });
+
+    document.getElementById("pageInfo").textContent =
+        `Page ${currentRunPage} of ${totalPages}`;
+}
+
+function changeRunPage(direction) {
+    const searchValue = document
+        .getElementById("runSearch")
+        .value.toLowerCase();
+
+    const statusValue = document
+        .getElementById("statusFilter")
+        .value;
+
+    const rows = Array.from(
+        document.querySelectorAll("#runHistory tr")
+    ).filter(row => row.cells.length === 7);
+
+    const filteredRows = rows.filter(row => {
+        const runId = row.cells[0].textContent.toLowerCase();
+        const status = row.cells[2].textContent.trim();
+
+        return runId.includes(searchValue) &&
+            (statusValue === "" || status === statusValue);
+    });
+
+    const totalPages = Math.max(
+        1,
+        Math.ceil(filteredRows.length / runsPerPage)
+    );
+
+    currentRunPage = Math.max(
+        1,
+        Math.min(currentRunPage + direction, totalPages)
+    );
+
+    applyRunPagination();
+}
+function sortRunHistory() {
+    const sortValue = document.getElementById("runSort").value;
+    const tbody = document.getElementById("runHistory");
+
+    const rows = Array.from(tbody.querySelectorAll("tr"));
+
+    rows.sort((a, b) => {
+        if (sortValue === "newest" || sortValue === "oldest") {
+            const dateA = new Date(a.cells[1].textContent);
+            const dateB = new Date(b.cells[1].textContent);
+
+            return sortValue === "newest"
+                ? dateB - dateA
+                : dateA - dateB;
+        }
+
+        const durationA = parseFloat(a.cells[6].textContent) || 0;
+        const durationB = parseFloat(b.cells[6].textContent) || 0;
+
+        return sortValue === "duration_high"
+            ? durationB - durationA
+            : durationA - durationB;
+    });
+
+    rows.forEach(row => tbody.appendChild(row));
+applyRunPagination();
+}
+function exportRunHistory() {
+    const rows = Array.from(
+        document.querySelectorAll("#runHistory tr")
+    ).filter(row =>
+        row.style.display !== "none" && row.cells.length === 7
+    );
+
+    if (rows.length === 0) {
+        alert("No records available to export.");
+        return;
+    }
+
+    const headers = [
+        "Run ID",
+        "Started At",
+        "Status",
+        "Rows Read",
+        "Accepted",
+        "Rejected",
+        "Duration"
+    ];
+
+    const csvRows = [headers];
+
+    rows.forEach(row => {
+        const values = Array.from(row.cells).map(cell =>
+            cell.textContent.trim()
+        );
+        csvRows.push(values);
+    });
+
+    const csvContent = csvRows.map(row =>
+        row.map(value =>
+            `"${value.replace(/"/g, '""')}"`
+        ).join(",")
+    ).join("\n");
+
+    const blob = new Blob([csvContent], {
+        type: "text/csv;charset=utf-8;"
+    });
+
+    const link = document.createElement("a");
+    link.href = URL.createObjectURL(blob);
+    link.download = "pipeline_run_history.csv";
+    link.click();
+
+    URL.revokeObjectURL(link.href);
+}   
+
+let curatedCurrentPage = 1;
+let curatedTotalPages = 1;
+const curatedPageSize = 50;
+
+async function loadCuratedFilters() {
+    try {
+        const response = await fetch("/api/curated-data/filters");
+
+        if (!response.ok) {
+            throw new Error("Unable to load filters");
+        }
+
+        const data = await response.json();
+
+        const currencySelect =
+            document.getElementById("curatedCurrency");
+
+        const typeSelect =
+            document.getElementById("curatedType");
+
+        data.currencies.forEach(currency => {
+            const option = document.createElement("option");
+            option.value = currency;
+            option.textContent = currency;
+            currencySelect.appendChild(option);
+        });
+
+        data.txn_types.forEach(type => {
+            const option = document.createElement("option");
+            option.value = type;
+            option.textContent = type;
+            typeSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Filter error:", error);
+    }
+}
+
+async function loadCuratedData() {
+    const search = document.getElementById("curatedSearch").value;
+    const currency = document.getElementById("curatedCurrency").value;
+    const txnType = document.getElementById("curatedType").value;
+
+    const params = new URLSearchParams({
+        search: search,
+        currency: currency,
+        txn_type: txnType,
+        limit: curatedPageSize,
+        offset: (curatedCurrentPage - 1) * curatedPageSize
+    });
+
+    const table = document.getElementById("curatedTable");
+    const count = document.getElementById("curatedCount");
+
+    table.innerHTML = `
+        <tr><td colspan="7" style="padding:15px;">
+            Loading records...
+        </td></tr>
+    `;
+
+    try {
+        const response = await fetch(
+            `/api/curated-data?${params.toString()}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to load curated records");
+        }
+
+        const data = await response.json();
+
+        table.innerHTML = "";
+
+        count.textContent =
+            `Showing ${data.records.length} of ${data.total_records} records`;
+
+        curatedTotalPages = Math.max(
+            1,
+            Math.ceil(data.total_records / curatedPageSize)
+        );
+
+        document.getElementById("curatedPageInfo").textContent =
+            `Page ${curatedCurrentPage} of ${curatedTotalPages}`;
+
+        if (data.records.length === 0) {
+            table.innerHTML = `
+                <tr>
+                    <td colspan="7" style="padding:15px;">
+                        No curated records found.
+                    </td>
+                </tr>
+            `;
+            return;
+        }
+
+        data.records.forEach(record => {
+            const row = document.createElement("tr");
+            row.style.borderBottom = "1px solid #263247";
+
+            const values = [
+                record.txn_id,
+                record.txn_type,
+                record.currency,
+                record.total_amount_minor,
+                record.leg_count,
+                record.first_event_ts,
+                record.is_late_arriving ? "Yes" : "No"
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.style.padding = "12px";
+                cell.textContent = value ?? "-";
+                row.appendChild(cell);
+            });
+
+            table.appendChild(row);
+        });
+
+    } catch (error) {
+        count.textContent = "Unable to load curated data.";
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7" style="padding:15px; color:#f87171;">
+                    ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+function searchCuratedData() {
+    curatedCurrentPage = 1;
+    loadCuratedData();
+}
+
+function changeCuratedPage(direction) {
+    const nextPage = curatedCurrentPage + direction;
+
+    if (nextPage < 1 || nextPage > curatedTotalPages) {
+        return;
+    }
+
+    curatedCurrentPage = nextPage;
+    loadCuratedData();
+}
+
+function clearCuratedFilters() {
+    document.getElementById("curatedSearch").value = "";
+    document.getElementById("curatedCurrency").value = "";
+    document.getElementById("curatedType").value = "";
+
+    curatedCurrentPage = 1;
+    loadCuratedData();
+}
+// Quarantined Data Explorer
+
+let quarantineCurrentPage = 1;
+let quarantineTotalPages = 1;
+const quarantinePageSize = 50;
+
+
+async function loadQuarantineFilters() {
+    try {
+        const response = await fetch("/api/quarantined-data/filters");
+
+        if (!response.ok) {
+            throw new Error("Unable to load rejection filters");
+        }
+
+        const data = await response.json();
+        const reasonSelect = document.getElementById("quarantineReason");
+
+        data.reasons.forEach(reason => {
+            const option = document.createElement("option");
+            option.value = reason;
+            option.textContent = reason;
+            reasonSelect.appendChild(option);
+        });
+
+    } catch (error) {
+        console.error("Quarantine filter error:", error);
+    }
+}
+
+
+async function loadQuarantinedData() {
+    const search = document.getElementById("quarantineSearch").value;
+    const reason = document.getElementById("quarantineReason").value;
+
+    const params = new URLSearchParams({
+        search: search,
+        reason: reason,
+        limit: quarantinePageSize,
+        offset: (quarantineCurrentPage - 1) * quarantinePageSize
+    });
+
+    const table = document.getElementById("quarantineTable");
+    const count = document.getElementById("quarantineCount");
+
+    table.innerHTML = `
+        <tr><td colspan="7" style="padding:15px;">Loading records...</td></tr>
+    `;
+
+    try {
+        const response = await fetch(`/api/quarantined-data?${params.toString()}`);
+
+        if (!response.ok) {
+            throw new Error("Unable to load quarantined records");
+        }
+
+        const data = await response.json();
+
+        table.innerHTML = "";
+
+        count.textContent =
+            `Showing ${data.records.length} of ${data.total_records} rejected records`;
+
+        quarantineTotalPages = Math.max(
+            1,
+            Math.ceil(data.total_records / quarantinePageSize)
+        );
+
+        document.getElementById("quarantinePageInfo").textContent =
+            `Page ${quarantineCurrentPage} of ${quarantineTotalPages}`;
+
+        if (data.records.length === 0) {
+            table.innerHTML = `
+                <tr><td colspan="7" style="padding:15px;">
+                    No rejected records found.
+                </td></tr>
+            `;
+            return;
+        }
+
+        data.records.forEach(record => {
+            const row = document.createElement("tr");
+            row.style.borderBottom = "1px solid #263247";
+
+            const values = [
+                record.txn_id,
+                record.source_file,
+                record.source_row_no,
+                record.leg_no,
+                record.reason_code,
+                record.reason_detail,
+                record.rejected_at
+            ];
+
+            values.forEach(value => {
+                const cell = document.createElement("td");
+                cell.style.padding = "12px";
+                cell.textContent = value ?? "-";
+                row.appendChild(cell);
+            });
+
+            table.appendChild(row);
+        });
+
+    } catch (error) {
+        count.textContent = "Unable to load quarantined data.";
+
+        table.innerHTML = `
+            <tr>
+                <td colspan="7" style="padding:15px; color:#f87171;">
+                    ${error.message}
+                </td>
+            </tr>
+        `;
+    }
+}
+
+
+function searchQuarantinedData() {
+    quarantineCurrentPage = 1;
+    loadQuarantinedData();
+}
+
+
+function changeQuarantinePage(direction) {
+    const nextPage = quarantineCurrentPage + direction;
+
+    if (nextPage < 1 || nextPage > quarantineTotalPages) {
+        return;
+    }
+
+    quarantineCurrentPage = nextPage;
+    loadQuarantinedData();
+}
+
+
+function clearQuarantineFilters() {
+    document.getElementById("quarantineSearch").value = "";
+    document.getElementById("quarantineReason").value = "";
+
+    quarantineCurrentPage = 1;
+    loadQuarantinedData();
+}
+// Data Quality Monitoring
+
+async function loadDataQuality() {
+    try {
+        const response = await fetch("/api/data-quality");
+
+        if (!response.ok) {
+            throw new Error("Unable to load data quality metrics");
+        }
+
+        const data = await response.json();
+
+        document.getElementById("qualityTotalRecords").textContent =
+            data.total_records.toLocaleString();
+
+        document.getElementById("qualityRejected").textContent =
+            data.total_rejected.toLocaleString();
+
+        document.getElementById("qualityRejectionRate").textContent =
+            data.rejection_rate + "%";
+
+        document.getElementById("qualitySuccessRate").textContent =
+            data.quality_rate + "%";
+
+        document.getElementById("qualityProgress").style.width =
+            data.quality_rate + "%";
+
+        const status = document.getElementById("qualityStatus");
+
+        if (data.quality_rate >= 95) {
+            status.textContent = "Excellent data quality";
+            status.style.color = "#10b981";
+        } else if (data.quality_rate >= 80) {
+            status.textContent = "Good data quality - some records need attention";
+            status.style.color = "#fbbf24";
+        } else {
+            status.textContent = "Data quality needs improvement";
+            status.style.color = "#f87171";
+        }
+
+    } catch (error) {
+        console.error("Data quality error:", error);
+
+        document.getElementById("qualityStatus").textContent =
+            "Unable to load data quality metrics.";
+    }
+}
+
+
+async function showRunDetails(runId) {
+    const modal = document.getElementById("runModal");
+    const content = document.getElementById("runDetailsContent");
+
+    modal.style.display = "flex";
+    content.innerHTML = "Loading details...";
+
+    try {
+        const response = await fetch(
+            `/api/dashboard/run-details/${encodeURIComponent(runId)}`
+        );
+
+        if (!response.ok) {
+            throw new Error("Unable to load run details");
+        }
+
+        const data = await response.json();
+
+        if (data.error) {
+            content.textContent = data.error;
+            return;
+        }
+
+        const accepted = Number(data.accepted ?? 0);
+        const rejected = Number(data.rejected ?? 0);
+        const total = Number(data.rows_read ?? 0);
+
+        const rejectionRate = total > 0
+            ? ((rejected / total) * 100).toFixed(2)
+            : "0.00";
+            const startedDate = data.started_at
+    ? new Date(data.started_at)
+    : null;
+
+const completionDate = startedDate && !isNaN(startedDate.getTime())
+    ? new Date(
+        startedDate.getTime() + Number(data.duration ?? 0) * 1000
+      )
+    : null;
+
+const completedAt = completionDate
+    ? completionDate.toLocaleString()
+    : "-";
+
+        content.innerHTML = `
+            <div style="line-height: 1.8; font-size: 14px;">
+
+                <div style="
+                    background: #0f172a;
+                    padding: 16px;
+                    border-radius: 8px;
+                    margin-bottom: 20px;
+                ">
+                    <p style="color:#94a3b8;">RUN ID</p>
+                    <p style="font-weight:bold; word-break:break-all;">
+                        ${data.run_id ?? "-"}
+                    </p>
+
+                    <p style="margin-top:12px; color:#94a3b8;">
+                        EXECUTION STATUS
+                    </p>
+
+                    <span style="
+                        color:${data.status === 'SUCCESS' ? '#10b981' : '#f87171'};
+                        font-weight:bold;
+                    ">
+                        ${data.status ?? "-"}
+                    </span>
+                </div>
+
+                <h3 style="margin-bottom:12px;">Transaction Summary</h3>
+
+                <div style="
+                    display:grid;
+                    grid-template-columns:repeat(2, 1fr);
+                    gap:12px;
+                ">
+
+                    <div style="background:#0f172a;padding:15px;border-radius:8px;">
+                        <p style="color:#94a3b8;">Total Rows</p>
+                        <h2>${total.toLocaleString()}</h2>
+                    </div>
+
+                    <div style="background:#0f172a;padding:15px;border-radius:8px;">
+                        <p style="color:#94a3b8;">Accepted</p>
+                        <h2 style="color:#10b981;">
+                            ${accepted.toLocaleString()}
+                        </h2>
+                    </div>
+
+                    <div style="background:#0f172a;padding:15px;border-radius:8px;">
+                        <p style="color:#94a3b8;">Rejected</p>
+                        <h2 style="color:#f87171;">
+                            ${rejected.toLocaleString()}
+                        </h2>
+                    </div>
+
+                    <div style="background:#0f172a;padding:15px;border-radius:8px;">
+                        <p style="color:#94a3b8;">Rejection Rate</p>
+                        <h2>${rejectionRate}%</h2>
+                    </div>
+
+                </div>
+
+                <hr style="border:1px solid #263247;margin:20px 0;">
+
+                <h3 style="margin-bottom:12px;">Execution Information</h3>
+
+                <p><strong>Started At:</strong> ${data.started_at ?? "-"}</p>
+
+                <p><strong>Duration:</strong> ${data.duration ?? 0} seconds</p>
+                <p><strong>Completed At:</strong> ${completedAt}</p>
+
+            </div>
+        `;
+
+    } catch (error) {
+        content.textContent = "Error: " + error.message;
+    }
+}
+function closeRunModal() {
+    document.getElementById("runModal").style.display = "none";
+}
+
+async function runPipeline() {
+    const transactionFile =
+        document.getElementById("transactionFile").files[0];
+
+    const accountsFile =
+        document.getElementById("accountsFile").files[0];
+
+    const resultDiv =
+        document.getElementById("pipelineExecutionResult");
+
+    if (!transactionFile || !accountsFile) {
+        resultDiv.textContent = "Please select both CSV files.";
+        return;
+    }
+
+    const formData = new FormData();
+
+    formData.append("transaction_file", transactionFile);
+    formData.append("accounts_file", accountsFile);
+
+    resultDiv.textContent = "Pipeline is running...";
+
+    try {
+        const response = await fetch("/api/pipeline/run", {
+            method: "POST",
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.detail || "Pipeline execution failed.");
+        }
+
+        if (result.status === "FAILED") {
+            resultDiv.textContent =
+                "Pipeline Failed\n" + (result.error || "Unknown error");
+        } else {
+            resultDiv.textContent =
+                `Pipeline Status: ${result.status}\n` +
+                `Run ID: ${result.run_id}\n` +
+                `Rows Read: ${result.rows_read}\n` +
+                `Rows Accepted: ${result.rows_accepted}\n` +
+                `Rows Rejected: ${result.rows_rejected}\n` +
+                `Transactions Accepted: ${result.txns_accepted}\n` +
+                `Transactions Rejected: ${result.txns_rejected}\n` +
+                `Duration: ${result.duration_seconds} seconds`;
+        }
+
+        refreshDashboard();
+        loadCuratedData();
+        loadQuarantinedData();
+
+    } catch (error) {
+        resultDiv.textContent = "Error: " + error.message;
+    }
+}
+// Generate Reports
+async function generateReports() {
+
+    const status = document.getElementById("reportStatus");
+
+    status.textContent = "Generating reports... Please wait.";
+    status.style.color = "#fbbf24";
+
+    try {
+        const response = await fetch("/api/reports/generate", {
+            method: "POST"
+        });
+
+        const result = await response.json();
+
+        if (!response.ok) {
+            throw new Error(result.detail || "Report generation failed.");
+        }
+
+        status.innerHTML = `
+            <span style="color:#10b981; font-weight:bold;">
+                Reports generated successfully!
+            </span>
+            <br><br>
+            Total Reconciliation Checks: ${result.total_checks}
+            <br>
+            Passed Checks: ${result.passed_checks}
+            <br>
+            Failed Checks: ${result.failed_checks}
+        `;
+
+        if (result.failed_checks > 0) {
+            status.innerHTML += `
+                <br><span style="color:#f87171;">
+                    Some reconciliation checks need attention.
+                </span>
+            `;
+        }
+
+    } catch (error) {
+
+        status.textContent = "Error: " + error.message;
+        status.style.color = "#f87171";
+
+    }
+}
+setInterval(refreshDashboard, 30000);
+        loadDashboard();
+        loadTransactionChart();
+        loadRejectionChart();  
+        loadRunHistory(); 
+        loadCuratedFilters();
+        loadCuratedData();
+        loadQuarantineFilters();
+        loadQuarantinedData();
+        loadDataQuality();
+    </script>
+</body>
+</html>
